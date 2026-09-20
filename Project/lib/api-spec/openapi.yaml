@@ -1,0 +1,495 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: TreeID API for AI-assisted tree identification and monitoring.
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: trees
+    description: Tree profiles and observations
+  - name: dashboard
+    description: Monitoring summaries
+  - name: assistant
+    description: Data-grounded TreeID assistant
+  - name: knowledge
+    description: Sustainability knowledge base
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /trees:
+    get:
+      operationId: listTrees
+      tags: [trees]
+      summary: List tree profiles
+      parameters:
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/HealthStatus"
+        - $ref: "#/components/parameters/Species"
+        - $ref: "#/components/parameters/Sort"
+      responses:
+        "200":
+          description: Tree profiles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tree"
+    post:
+      operationId: createTree
+      tags: [trees]
+      summary: Create a tree profile from an analysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TreeInput"
+      responses:
+        "201":
+          description: Created tree
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tree"
+  /trees/analyze:
+    post:
+      operationId: analyzeTree
+      tags: [trees]
+      summary: Analyze an uploaded tree image
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalysisInput"
+      responses:
+        "200":
+          description: Assisted visual analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisResult"
+        "400":
+          description: Invalid image
+  /trees/{id}:
+    get:
+      operationId: getTree
+      tags: [trees]
+      summary: Get a tree profile
+      parameters:
+        - $ref: "#/components/parameters/TreeId"
+      responses:
+        "200":
+          description: Tree profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tree"
+        "404":
+          description: Tree not found
+    patch:
+      operationId: updateTree
+      tags: [trees]
+      summary: Update a tree profile or monitoring status
+      parameters:
+        - $ref: "#/components/parameters/TreeId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TreeUpdate"
+      responses:
+        "200":
+          description: Updated tree
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tree"
+    delete:
+      operationId: deleteTree
+      tags: [trees]
+      summary: Delete a tree profile
+      parameters:
+        - $ref: "#/components/parameters/TreeId"
+      responses:
+        "204":
+          description: Deleted
+  /trees/{id}/observations:
+    get:
+      operationId: listObservations
+      tags: [trees]
+      summary: List observations for a tree
+      parameters:
+        - $ref: "#/components/parameters/TreeId"
+      responses:
+        "200":
+          description: Observations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Observation"
+    post:
+      operationId: createObservation
+      tags: [trees]
+      summary: Add an observation to a tree
+      parameters:
+        - $ref: "#/components/parameters/TreeId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ObservationInput"
+      responses:
+        "201":
+          description: Created observation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Observation"
+  /trees/compare:
+    post:
+      operationId: compareObservations
+      tags: [trees]
+      summary: Compare two observations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComparisonInput"
+      responses:
+        "200":
+          description: Assisted visual comparison
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComparisonResult"
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard statistics
+      responses:
+        "200":
+          description: Dashboard summary and chart series
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+  /assistant:
+    post:
+      operationId: askAssistant
+      tags: [assistant]
+      summary: Ask a question grounded in TreeID records
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssistantInput"
+      responses:
+        "200":
+          description: Data-grounded answer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssistantResponse"
+  /knowledge:
+    get:
+      operationId: listKnowledgeDocuments
+      tags: [knowledge]
+      summary: List sustainability knowledge documents
+      responses:
+        "200":
+          description: Knowledge documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/KnowledgeDocument"
+components:
+  parameters:
+    TreeId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    Search:
+      name: search
+      in: query
+      required: false
+      schema:
+        type: string
+    HealthStatus:
+      name: healthStatus
+      in: query
+      required: false
+      schema:
+        $ref: "#/components/schemas/HealthStatusEnum"
+    Species:
+      name: species
+      in: query
+      required: false
+      schema:
+        type: string
+    Sort:
+      name: sort
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [recent, oldest, concern, species]
+        default: recent
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+    HealthStatusEnum:
+      type: string
+      enum: [Healthy, Needs Monitoring, Potential Concern, Inspection Recommended]
+    Tree:
+      type: object
+      required:
+        - id
+        - treeIdentifier
+        - species
+        - commonName
+        - locationName
+        - currentHealthStatus
+        - createdAt
+        - updatedAt
+        - observationCount
+        - lastObserved
+        - monitoringActive
+        - latitude
+        - longitude
+        - currentImageUrl
+      properties:
+        id: { type: integer }
+        treeIdentifier: { type: string }
+        species: { type: string }
+        commonName: { type: string }
+        locationName: { type: string }
+        latitude: { type: number }
+        longitude: { type: number }
+        currentHealthStatus:
+          $ref: "#/components/schemas/HealthStatusEnum"
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        observationCount: { type: integer }
+        lastObserved: { type: string, format: date-time }
+        monitoringActive: { type: boolean }
+        currentImageUrl: { type: string }
+    TreeInput:
+      type: object
+      required: [species, commonName, locationName, latitude, longitude, analysis]
+      properties:
+        species: { type: string, minLength: 1 }
+        commonName: { type: string, minLength: 1 }
+        locationName: { type: string, minLength: 1 }
+        latitude: { type: number, minimum: -90, maximum: 90 }
+        longitude: { type: number, minimum: -180, maximum: 180 }
+        imageUrl: { type: string }
+        analysis:
+          $ref: "#/components/schemas/AnalysisResult"
+    TreeUpdate:
+      type: object
+      properties:
+        locationName: { type: string }
+        latitude: { type: number, minimum: -90, maximum: 90 }
+        longitude: { type: number, minimum: -180, maximum: 180 }
+        monitoringActive: { type: boolean }
+        currentHealthStatus:
+          $ref: "#/components/schemas/HealthStatusEnum"
+    AnalysisInput:
+      type: object
+      required: [imageData, fileName, mimeType]
+      properties:
+        imageData: { type: string, description: Base64 or data URL image content }
+        fileName: { type: string }
+        mimeType:
+          type: string
+          enum: [image/jpeg, image/png, image/webp]
+    AnalysisResult:
+      type: object
+      required:
+        - species
+        - commonName
+        - confidence
+        - healthStatus
+        - healthConfidence
+        - visibleIndicators
+        - potentialConcerns
+        - recommendations
+        - inspectionRequired
+        - limitations
+        - imageUrl
+        - analyzedAt
+        - mode
+      properties:
+        species: { type: string }
+        commonName: { type: string }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+        healthStatus:
+          $ref: "#/components/schemas/HealthStatusEnum"
+        healthConfidence: { type: number, minimum: 0, maximum: 1 }
+        visibleIndicators:
+          type: array
+          items: { type: string }
+        potentialConcerns:
+          type: array
+          items: { type: string }
+        recommendations:
+          type: array
+          items: { type: string }
+        inspectionRequired: { type: boolean }
+        limitations: { type: string }
+        imageUrl: { type: string }
+        analyzedAt: { type: string, format: date-time }
+        mode:
+          type: string
+          enum: [demo, provider]
+    Observation:
+      type: object
+      required:
+        - id
+        - treeId
+        - observedAt
+        - healthStatus
+        - aiConfidence
+        - visibleIndicators
+        - potentialConcerns
+        - recommendations
+        - imageUrl
+        - summary
+      properties:
+        id: { type: integer }
+        treeId: { type: integer }
+        observedAt: { type: string, format: date-time }
+        healthStatus:
+          $ref: "#/components/schemas/HealthStatusEnum"
+        aiConfidence: { type: number }
+        visibleIndicators:
+          type: array
+          items: { type: string }
+        potentialConcerns:
+          type: array
+          items: { type: string }
+        recommendations:
+          type: array
+          items: { type: string }
+        imageUrl: { type: string }
+        summary: { type: string }
+    ObservationInput:
+      type: object
+      required: [analysis]
+      properties:
+        imageUrl: { type: string }
+        analysis:
+          $ref: "#/components/schemas/AnalysisResult"
+    ComparisonInput:
+      type: object
+      required: [previousObservationId, currentObservationId]
+      properties:
+        previousObservationId: { type: integer }
+        currentObservationId: { type: integer }
+    ComparisonResult:
+      type: object
+      required: [previous, current, visibleChanges, assessment, recommendedAction, limitation]
+      properties:
+        previous:
+          $ref: "#/components/schemas/Observation"
+        current:
+          $ref: "#/components/schemas/Observation"
+        visibleChanges:
+          type: array
+          items: { type: string }
+        assessment: { type: string }
+        recommendedAction: { type: string }
+        limitation: { type: string }
+    DashboardStats:
+      type: object
+      required: [totalTrees, healthy, needsMonitoring, potentialConcern, inspectionRecommended, speciesBreakdown, observationsOverTime, recentObservations]
+      properties:
+        totalTrees: { type: integer }
+        healthy: { type: integer }
+        needsMonitoring: { type: integer }
+        potentialConcern: { type: integer }
+        inspectionRecommended: { type: integer }
+        speciesBreakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChartPoint"
+        observationsOverTime:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChartPoint"
+        recentObservations:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecentObservation"
+    ChartPoint:
+      type: object
+      required: [label, value]
+      properties:
+        label: { type: string }
+        value: { type: number }
+    RecentObservation:
+      type: object
+      required: [treeId, treeIdentifier, species, locationName, healthStatus, observedAt]
+      properties:
+        treeId: { type: integer }
+        treeIdentifier: { type: string }
+        species: { type: string }
+        locationName: { type: string }
+        healthStatus:
+          $ref: "#/components/schemas/HealthStatusEnum"
+        observedAt: { type: string, format: date-time }
+    AssistantInput:
+      type: object
+      required: [question]
+      properties:
+        question: { type: string, minLength: 1 }
+    AssistantResponse:
+      type: object
+      required: [answer, context, relatedTrees]
+      properties:
+        answer: { type: string }
+        context: { type: string }
+        relatedTrees:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tree"
+    KnowledgeDocument:
+      type: object
+      required: [id, title, excerpt, topic]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        excerpt: { type: string }
+        topic: { type: string }

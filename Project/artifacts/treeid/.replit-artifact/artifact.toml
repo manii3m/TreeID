@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "TreeID"
+description = "An AI-assisted tree identification and health monitoring system for campus and community sustainability teams. Users can identify species, save tree profiles, track observations over time, compare images, explore a campus map, and ask questions grounded in real monitoring records."
+version = "1.0.0"
+id = "artifacts/treeid"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21974
+
+[services.development]
+run = "pnpm --filter @workspace/treeid run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/treeid", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/treeid/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21974"
+BASE_PATH = "/"
