@@ -2,6 +2,9 @@
 
 **AI-assisted tree identification and health monitoring for campus and community sustainability teams.**
 
+
+<img width="1910" height="915" alt="screenshot-1789846444360" src="https://github.com/user-attachments/assets/73cf8899-707c-44a9-9d83-69d8ee21ce0f" />
+
 TreeID gives field teams a clear, defensible view of urban canopy health — one observation at a time. Upload a photo, get an assisted visual assessment, build a living profile, and track change over time.
 
 > Supports **SDG 15 — Life on Land** by making urban and campus biodiversity easier to observe, document, and care for.
